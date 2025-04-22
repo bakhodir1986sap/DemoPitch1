@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>OncoAI - Демонстрация управления пациентами</title>
+  <!-- Include CSS styles -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-image: url('medicine_background.png');
+      background-size: cover;
+      background-position: center;
+    }
+    h1, h2 {
+      text-align: center;
+      color: black;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: rgba(255,255,255,0.6);
+      padding: 30px;
+      border-radius: 10px;
+    }
+    .logo {
+      width: 150px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="password"],
+    input[type="file"],
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    #loginBtn,
+    #startProcessBtn,
+    #saveBtn,
+    #addPatientBtn,
+    #deletePatientBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    #spinner {
+      display: none;
+      margin: 20px auto;
+      text-align: center;
+    }
+    #spinner img {
+      width: 50px;
+    }
+    #results {
+      display: none;
+      margin-top: 20px;
+    }
+    #results h2 {
+      color: #2E8B57;
+    }
+    .result-item {
+      margin-bottom: 10px;
+    }
+    /* Page navigation */
+    #loginPage,
+    #page1,
+    #page2 {
+      display: none;
+    }
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    /* Error message */
+    .error-message {
+      color: red;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login Page -->
+  <div id="loginPage" class="container">
+    <img src="logo.png" alt="Логотип OncoAI" class="logo">
+    <h1>Вход в систему OncoAI</h1>
+    <div id="loginError" class="error-message"></div>
+    <div class="form-group">
+      <label for="username">Имя пользователя:</label>
+      <input type="text" id="username" name="username" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Пароль:</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <button type="button" id="loginBtn">Войти</button>
+  </div>
+
+  <!-- Page 1: Patient Form -->
+  <div id="page1" class="container">
+    <img src="logo.png" alt="Логотип OncoAI" class="logo">
+    <h1>Демонстрация диагностики опухоли мозга OncoAI</h1>
+
+    <form id="diagnosisForm">
+      <div class="form-group">
+        <label for="patientName">Имя пациента:</label>
+        <input type="text" id="patientName" name="patientName" required>
+      </div>
+      <div class="form-group">
+        <label for="patientAge">Возраст пациента:</label>
+        <input type="text" id="patientAge" name="patientAge" required>
+      </div>
+      <div class="form-group">
+        <label for="patientGender">Пол пациента:</label>
+        <select id="patientGender" name="patientGender" required>
+          <option value="">Выберите пол</option>
+          <option value="Женский">Женский</option>
+          <option value="Мужской">Мужской</option>
+          <option value="Другой">Другой</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="symptoms">Описание симптомов:</label>
+        <input type="text" id="symptoms" name="symptoms" required>
+      </div>
+      <div class="form-group">
+        <label for="medicalImage">Загрузите медицинское изображение (МРТ/КТ):</label>
+        <input type="file" id="medicalImage" name="medicalImage" accept="image/*" required>
+      </div>
+      <button type="button" id="startProcessBtn">Начать анализ</button>
+      <button type="button" id="saveBtn">Сохранить</button>
+    </form>
+
+    <div id="spinner">
+      <p>Обработка, пожалуйста, подождите...</p>
+      <img src="https://i.imgur.com/LLF5iyg.gif" alt="Загрузка">
+    </div>
+
+    <div id="results">
+      <h2>Результаты диагностики</h2>
+      <div class="result-item" id="resultText"></div>
+      <div class="result-item">
+        <strong>Рекомендуемые дальнейшие действия:</strong>
+        <ul>
+          <li>Консультация с онкологом</li>
+          <li>Запланировать биопсию</li>
+          <li>Подготовиться к возможным вариантам лечения</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page 2: Patient List -->
+  <div id="page2" class="container">
+    <img src="logo.png" alt="Логотип OncoAI" class="logo">
+    <h1>Управление пациентами</h1>
+    <button type="button" id="addPatientBtn">Добавить</button>
+    <button type="button" id="deletePatientBtn">Удалить</button>
+
+    <table id="patientTable">
+      <thead>
+        <tr>
+          <th>Выбрать</th>
+          <th>Имя пациента</th>
+          <th>Возраст</th>
+          <th>Пол</th>
+          <th>Симптомы</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Patient rows will be dynamically added here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Include JavaScript -->
+  <script>
+    // Array to store patient data
+    var patients = [];
+
+    // Show Login Page on initial load
+    document.getElementById('loginPage').style.display = 'block';
+
+    // Login button functionality
+    document.getElementById('loginBtn').addEventListener('click', function() {
+      var username = document.getElementById('username').value;
+      var password = document.getElementById('password').value;
+      var loginError = document.getElementById('loginError');
+
+      if (username === 'admin' && password === 'admin') {
+        // Clear any previous error messages
+        loginError.textContent = '';
+        // Navigate to Page 2
+        showPage2();
+      } else {
+        loginError.textContent = 'Неверное имя пользователя или пароль.';
+      }
+    });
+
+    // Start Process button functionality
+    document.getElementById('startProcessBtn').addEventListener('click', function() {
+
+      // Validate form inputs
+      var form = document.getElementById('diagnosisForm');
+      if (!form.checkValidity()) {
+        alert('Пожалуйста, заполните все необходимые поля.');
+        return;
+      }
+
+      // Show the spinner
+      document.getElementById('spinner').style.display = 'block';
+
+      // Hide previous results
+      document.getElementById('results').style.display = 'none';
+
+      // Simulate processing time with a timeout
+      setTimeout(function() {
+        // Hide the spinner
+        document.getElementById('spinner').style.display = 'none';
+
+        // Display the results
+        document.getElementById('results').style.display = 'block';
+
+        // Generate a mock diagnosis result
+        var patientName = document.getElementById('patientName').value;
+        var diagnosisResult = 'Уважаемый(ая) ' + patientName + ', анализ указывает на высокую вероятность глиобластомы мультиформной.';
+
+        document.getElementById('resultText').innerText = diagnosisResult;
+
+      }, 3000); // Simulate a 3-second processing time
+
+    });
+
+    // Save button functionality
+    document.getElementById('saveBtn').addEventListener('click', function() {
+
+      // Validate form inputs
+      var form = document.getElementById('diagnosisForm');
+      if (!form.checkValidity()) {
+        alert('Пожалуйста, заполните все необходимые поля.');
+        return;
+      }
+
+      // Collect patient data
+      var patientData = {
+        name: document.getElementById('patientName').value,
+        age: document.getElementById('patientAge').value,
+        gender: document.getElementById('patientGender').value,
+        symptoms: document.getElementById('symptoms').value
+        // Note: We're not saving the image in this demo
+      };
+
+      // Add patient data to the array
+      patients.push(patientData);
+
+      // Reset the form
+      form.reset();
+
+      // Navigate to Page 2
+      showPage2();
+
+    });
+
+    // Show Page 1 function
+    function showPage1() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('page1').style.display = 'block';
+      document.getElementById('page2').style.display = 'none';
+    }
+
+    // Show Page 2 function
+    function showPage2() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('page1').style.display = 'none';
+      document.getElementById('page2').style.display = 'block';
+
+      // Update the patient table
+      updatePatientTable();
+    }
+
+    // Add Patient button functionality
+    document.getElementById('addPatientBtn').addEventListener('click', function() {
+      showPage1();
+    });
+
+    // Delete Patient button functionality
+    document.getElementById('deletePatientBtn').addEventListener('click', function() {
+
+      // Get selected checkboxes
+      var checkboxes = document.querySelectorAll('input[name="selectPatient"]:checked');
+
+      if (checkboxes.length === 0) {
+        alert('Пожалуйста, выберите хотя бы одного пациента для удаления.');
+        return;
+      }
+
+      // Remove selected patients from the array
+      // Iterate in reverse to prevent index shift issues
+      for (var i = checkboxes.length - 1; i >= 0; i--) {
+        var index = checkboxes[i].value;
+        patients.splice(index, 1);
+      }
+
+      // Update the patient table
+      updatePatientTable();
+    });
+
+    // Function to update the patient table
+    function updatePatientTable() {
+      var tbody = document.getElementById('patientTable').getElementsByTagName('tbody')[0];
+      tbody.innerHTML = ''; // Clear existing rows
+
+      patients.forEach(function(patient, index) {
+        var row = tbody.insertRow();
+
+        // Select checkbox
+        var cellSelect = row.insertCell(0);
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'selectPatient';
+        checkbox.value = index;
+        cellSelect.appendChild(checkbox);
+
+        // Patient Name
+        var cellName = row.insertCell(1);
+        cellName.textContent = patient.name;
+
+        // Age
+        var cellAge = row.insertCell(2);
+        cellAge.textContent = patient.age;
+
+        // Gender
+        var cellGender = row.insertCell(3);
+        cellGender.textContent = patient.gender;
+
+        // Symptoms
+        var cellSymptoms = row.insertCell(4);
+        cellSymptoms.textContent = patient.symptoms;
+      });
+    }
+
+  </script>
+
+</body>
+</html>
